@@ -1,0 +1,50 @@
+Project Tree: C:\Users\jacob\Documents\_UsefulDataCurationTools\_NodeWALKER
+Generated: 2026-03-05 07:10:14.096085
+
+├── 📁 src/
+│   ├── 📁 ui/
+│   │   ├── 📁 panels/
+│   │   │   ├── 📄 __init__.py
+│   │   │   ├── 📄 airlock_pane.py
+│   │   │   ├── 📄 chat_pane.py
+│   │   │   ├── 📄 explorer_pane.py
+│   │   │   ├── 📄 preview_pane.py
+│   │   │   ├── 📄 settings_modal.py
+│   │   │   ├── 📄 tool_palette.py
+│   │   │   └── 📄 view_palette.py
+│   │   ├── 📄 __init__.py
+│   │   ├── 📄 circuit_window.py
+│   │   ├── 📄 event_bus.py
+│   │   ├── 📄 main_window.py
+│   │   └── 📄 theme.py
+│   ├── 📁 walker/
+│   │   ├── 📄 __init__.py
+│   │   ├── 📄 activation_store.py
+│   │   ├── 📄 activation_types.py
+│   │   ├── 📄 antidata.py
+│   │   ├── 📄 cas.py
+│   │   ├── 📄 chunks.py
+│   │   ├── 📄 db.py
+│   │   ├── 📄 graph.py
+│   │   ├── 📄 llm_agent.py
+│   │   ├── 📄 manifest.py
+│   │   ├── 📄 notes.py
+│   │   ├── 📄 policy.py
+│   │   ├── 📄 scoring.py
+│   │   ├── 📄 session_db.py
+│   │   ├── 📄 signature.py
+│   │   ├── 📄 structure.py
+│   │   ├── 📄 types.py
+│   │   └── 📄 walker.py
+│   ├── 📄 __init__.py
+│   ├── 📄 app.py
+│   └── 📄 test_walker.py
+├── 📄 .gitignore
+├── 📄 _NodeWALKER.7z
+├── 📄 _NodeWALKER.spec
+├── 📄 LICENSE.md
+├── 📄 pyproject.toml
+├── 📄 README.md
+├── 📄 requirements.txt
+├── 📄 run.bat
+└── 📄 setup_env.bat
