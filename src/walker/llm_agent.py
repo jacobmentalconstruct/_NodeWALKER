@@ -280,6 +280,45 @@ Always include citations to make your responses verifiable and traceable."""
         except Exception as e:
             return f"[helper error: {e}]"
 
+    def process_prompt_with_referent(
+        self,
+        prompt: str,
+        session_id: str,
+        referent_context: str = "",
+    ) -> Tuple[str, List[str]]:
+        """
+        Process a prompt with optional referent context injected.
+
+        The referent_context describes what "this/it/that" points to
+        (e.g. a specific node, chunk, or selected text).  It is injected
+        as a system message right before the user's prompt so the LLM
+        knows the deictic target.
+
+        Args:
+            prompt: User's input prompt.
+            session_id: Session ID for fetching summaries.
+            referent_context: Plain-text description of the bound referent.
+
+        Returns:
+            Tuple of (response_text, extracted_citations).
+        """
+        if referent_context:
+            # Temporarily inject referent as pinned context
+            marker = f"**Active Referent**:\n{referent_context}\n\n" \
+                     "IMPORTANT: Only describe what is actually present " \
+                     "in the code above. Do not invent behaviour."
+            self.pinned_context.append(marker)
+
+        try:
+            return self.process_prompt(prompt, session_id)
+        finally:
+            # Remove the injected marker so it doesn't persist
+            if referent_context:
+                try:
+                    self.pinned_context.remove(marker)
+                except ValueError:
+                    pass
+
     @staticmethod
     def _extract_citations(text: str) -> List[str]:
         """

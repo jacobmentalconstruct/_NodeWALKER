@@ -1,7 +1,13 @@
 {
   "permissions": {
     "allow": [
-      "Bash(python -c \":*)"
+      "Bash(python -c \":*)",
+      "Bash(wc -l /c/Users/jacob/Documents/_UsefulDataCurationTools/_NodeWALKER/src/walker/gravity/*.py)",
+      "Bash(python -c \"import sys,json; data=json.load\\(sys.stdin\\); print\\(data[0][''text'']\\)\")",
+      "Bash(python -m py_compile \"C:/Users/jacob/Documents/_UsefulDataCurationTools/_NodeWALKER/src/walker/gravity/pipeline.py\")",
+      "Bash(python -m py_compile \"C:/Users/jacob/Documents/_UsefulDataCurationTools/_NodeWALKER/src/walker/forensics/pipeline.py\")",
+      "Bash(python -m py_compile \"C:/Users/jacob/Documents/_UsefulDataCurationTools/_NodeWALKER/src/walker/gravity/packer.py\")",
+      "Bash(python -m py_compile \"C:/Users/jacob/Documents/_UsefulDataCurationTools/_NodeWALKER/src/walker/gravity/types.py\")"
     ]
   }
 }

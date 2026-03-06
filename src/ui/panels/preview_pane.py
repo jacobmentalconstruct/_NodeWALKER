@@ -181,3 +181,23 @@ class PreviewPane:
     def get_current_content(self) -> str:
         """Get the currently displayed content."""
         return self.current_content
+
+    def get_selected_span(self) -> Optional[Dict[str, Any]]:
+        """
+        Get info about the currently focused target and any selected text.
+
+        Returns dict with keys: target_type, target_id, chunk_id, file_path,
+        selected_text, content.  Returns None if nothing is focused.
+        """
+        if not self.current_target:
+            return None
+
+        meta = self.current_target.get("meta", {})
+        return {
+            "target_type": self.current_target.get("target_type", ""),
+            "target_id": self.current_target.get("target_id", ""),
+            "chunk_id": meta.get("chunk_id", ""),
+            "file_path": meta.get("path", ""),
+            "selected_text": "",  # Populated by UI layer (Tkinter selection)
+            "content": self.current_content,
+        }

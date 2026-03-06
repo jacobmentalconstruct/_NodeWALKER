@@ -81,6 +81,16 @@ class AntiDataAction(Enum):
     WARN = "warn"
 
 
+class WalkStatus(Enum):
+    """Status of a walker run within a forensic query."""
+    IDLE = "idle"
+    WALKING = "walking"
+    ESCAPE = "escape"
+    SUFFICIENT = "sufficient"
+    BUDGET_EXHAUSTED = "budget_exhausted"
+    ERROR = "error"
+
+
 # =============================================================================
 # Manifest Types
 # =============================================================================
@@ -633,3 +643,37 @@ class CartridgeProfile:
     failure_modes: List[str] = field(default_factory=list)
     last_seen: str = ""
     recommended_policy: Optional[TraversalPolicy] = None
+
+
+# =============================================================================
+# Patch Types (Phase 2 — Stateless Exact-Match Code Helper)
+# =============================================================================
+
+@dataclass
+class PatchProposal:
+    """A proposed code change using exact search/replace blocks."""
+    target_file_path: str = ""
+    search_block: str = ""          # Exact text to find (must match verbatim)
+    replace_block: str = ""         # Replacement text
+    evidence_ids: List[str] = field(default_factory=list)
+    justification: str = ""         # LLM-generated rationale for the change
+
+
+@dataclass
+class PatchResult:
+    """Outcome of applying a patch."""
+    success: bool = False
+    file_path: str = ""
+    lines_changed: int = 0
+    error: str = ""
+
+
+@dataclass
+class PatchVerificationResult:
+    """Result of verifying an exact-match patch before applying."""
+    found: bool = False
+    file_path: str = ""
+    line_number: int = 0            # 1-based line where match starts
+    context_before: str = ""        # Lines surrounding the match (for preview)
+    context_after: str = ""         # Preview of what the file will look like
+    error: str = ""

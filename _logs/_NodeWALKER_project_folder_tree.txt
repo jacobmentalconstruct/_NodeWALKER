@@ -1,6 +1,8 @@
 Project Tree: C:\Users\jacob\Documents\_UsefulDataCurationTools\_NodeWALKER
-Generated: 2026-03-05 07:10:14.096085
+Generated: 2026-03-06 07:40:05.787377
 
+├── 📁 assets/
+│   └── 📁 icons/
 ├── 📁 src/
 │   ├── 📁 ui/
 │   │   ├── 📁 panels/
@@ -8,6 +10,7 @@ Generated: 2026-03-05 07:10:14.096085
 │   │   │   ├── 📄 airlock_pane.py
 │   │   │   ├── 📄 chat_pane.py
 │   │   │   ├── 📄 explorer_pane.py
+│   │   │   ├── 📄 patch_approval_modal.py
 │   │   │   ├── 📄 preview_pane.py
 │   │   │   ├── 📄 settings_modal.py
 │   │   │   ├── 📄 tool_palette.py
@@ -18,17 +21,35 @@ Generated: 2026-03-05 07:10:14.096085
 │   │   ├── 📄 main_window.py
 │   │   └── 📄 theme.py
 │   ├── 📁 walker/
+│   │   ├── 📁 forensics/
+│   │   │   ├── 📄 __init__.py
+│   │   │   ├── 📄 pipeline.py
+│   │   │   ├── 📄 referents.py
+│   │   │   ├── 📄 router.py
+│   │   │   └── 📄 types.py
+│   │   ├── 📁 gravity/
+│   │   │   ├── 📄 __init__.py
+│   │   │   ├── 📄 decomposer.py
+│   │   │   ├── 📄 engine.py
+│   │   │   ├── 📄 packer.py
+│   │   │   ├── 📄 pipeline.py
+│   │   │   ├── 📄 sufficiency.py
+│   │   │   └── 📄 types.py
 │   │   ├── 📄 __init__.py
 │   │   ├── 📄 activation_store.py
 │   │   ├── 📄 activation_types.py
 │   │   ├── 📄 antidata.py
+│   │   ├── 📄 app_settings.py
 │   │   ├── 📄 cas.py
 │   │   ├── 📄 chunks.py
 │   │   ├── 📄 db.py
 │   │   ├── 📄 graph.py
 │   │   ├── 📄 llm_agent.py
 │   │   ├── 📄 manifest.py
+│   │   ├── 📄 model_validator.py
+│   │   ├── 📄 mutation_prompt.py
 │   │   ├── 📄 notes.py
+│   │   ├── 📄 patcher.py
 │   │   ├── 📄 policy.py
 │   │   ├── 📄 scoring.py
 │   │   ├── 📄 session_db.py
@@ -40,7 +61,6 @@ Generated: 2026-03-05 07:10:14.096085
 │   ├── 📄 app.py
 │   └── 📄 test_walker.py
 ├── 📄 .gitignore
-├── 📄 _NodeWALKER.7z
 ├── 📄 _NodeWALKER.spec
 ├── 📄 LICENSE.md
 ├── 📄 pyproject.toml

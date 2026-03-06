@@ -307,6 +307,79 @@ class Scorer:
         return False
     
     # =========================================================================
+    # Escape Detection & Novelty Scoring
+    # =========================================================================
+
+    def compute_global_frequency_penalty(self, candidate_id: str) -> float:
+        """
+        Down-weight ubiquitous nodes using visit history.
+
+        Nodes that appear in both visited_nodes and visited_chunks are
+        likely central hubs. Returns 0.0-0.5 penalty.
+        """
+        penalty = 0.0
+        if candidate_id in self.visited_nodes:
+            penalty += 0.25
+        if candidate_id in self.visited_chunks:
+            penalty += 0.25
+        return penalty
+
+    def compute_novelty_bonus(
+        self, candidate_id: str, recent_path: List[str],
+    ) -> float:
+        """
+        Reward nodes that are structurally distant from the recent walk path.
+
+        Returns 0.0-0.3 bonus for novel candidates.
+        """
+        if not recent_path:
+            return 0.15  # Default bonus when no history
+
+        if candidate_id in recent_path:
+            return 0.0  # No bonus for revisits
+
+        # If candidate is not in the recent walk path, full bonus
+        return 0.2
+
+    def should_trigger_escape(
+        self,
+        recent_scores: Optional[List[float]] = None,
+        recent_clusters: Optional[List[str]] = None,
+    ) -> bool:
+        """
+        Detect when the walker is stuck in a local cluster.
+
+        Conditions for escape:
+        1. Last 8+ scores are all below 0.3
+        2. Score variance in last 10 is near zero (plateau detection)
+        3. Last 5 visited nodes share the same parent (cluster detection)
+
+        Returns True if escape should be triggered.
+        """
+        scores = recent_scores if recent_scores is not None else self._recent_scores
+
+        # Condition 1: Prolonged low scores
+        if len(scores) >= 8:
+            if all(s < 0.3 for s in scores[-8:]):
+                return True
+
+        # Condition 2: Low variance (plateau)
+        if len(scores) >= 10:
+            window = scores[-10:]
+            mean = sum(window) / len(window)
+            variance = sum((s - mean) ** 2 for s in window) / len(window)
+            if variance < 0.001 and mean < 0.4:
+                return True
+
+        # Condition 3: Cluster detection
+        if recent_clusters and len(recent_clusters) >= 5:
+            last_5 = recent_clusters[-5:]
+            if len(set(last_5)) == 1:  # All in same cluster
+                return True
+
+        return False
+
+    # =========================================================================
     # Convenience Methods
     # =========================================================================
     

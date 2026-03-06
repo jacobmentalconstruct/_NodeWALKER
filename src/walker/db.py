@@ -602,42 +602,55 @@ class CartridgeDB:
     
     def get_graph_edges_from(self, source_id: str) -> List[GraphEdge]:
         """Get edges from a graph node"""
-        with self.cursor() as cur:
-            cur.execute("""
-                SELECT * FROM graph_edges 
-                WHERE source_id = ?
-                ORDER BY weight DESC
-            """, (source_id,))
-            return [self._row_to_graph_edge(row) for row in cur.fetchall()]
-    
+        try:
+            with self.cursor() as cur:
+                cur.execute("""
+                    SELECT * FROM graph_edges
+                    WHERE source_id = ?
+                    ORDER BY weight DESC
+                """, (source_id,))
+                return [self._row_to_graph_edge(row) for row in cur.fetchall()]
+        except sqlite3.OperationalError:
+            # Schema mismatch — column may not exist in this cartridge
+            return []
+
     def get_graph_edges_to(self, target_id: str) -> List[GraphEdge]:
         """Get edges to a graph node"""
-        with self.cursor() as cur:
-            cur.execute("""
-                SELECT * FROM graph_edges 
-                WHERE target_id = ?
-                ORDER BY weight DESC
-            """, (target_id,))
-            return [self._row_to_graph_edge(row) for row in cur.fetchall()]
-    
+        try:
+            with self.cursor() as cur:
+                cur.execute("""
+                    SELECT * FROM graph_edges
+                    WHERE target_id = ?
+                    ORDER BY weight DESC
+                """, (target_id,))
+                return [self._row_to_graph_edge(row) for row in cur.fetchall()]
+        except sqlite3.OperationalError:
+            return []
+
     def get_graph_edges_by_type(self, edge_type: str) -> List[GraphEdge]:
         """Get all edges of a type"""
-        with self.cursor() as cur:
-            cur.execute("""
-                SELECT * FROM graph_edges 
-                WHERE edge_type = ?
-                ORDER BY weight DESC
-            """, (edge_type,))
-            return [self._row_to_graph_edge(row) for row in cur.fetchall()]
-    
+        try:
+            with self.cursor() as cur:
+                cur.execute("""
+                    SELECT * FROM graph_edges
+                    WHERE edge_type = ?
+                    ORDER BY weight DESC
+                """, (edge_type,))
+                return [self._row_to_graph_edge(row) for row in cur.fetchall()]
+        except sqlite3.OperationalError:
+            return []
+
     def get_all_edge_types(self) -> List[str]:
         """Get unique edge types"""
-        with self.cursor() as cur:
-            cur.execute("""
-                SELECT DISTINCT edge_type FROM graph_edges 
-                ORDER BY edge_type
-            """)
-            return [row[0] for row in cur.fetchall()]
+        try:
+            with self.cursor() as cur:
+                cur.execute("""
+                    SELECT DISTINCT edge_type FROM graph_edges
+                    ORDER BY edge_type
+                """)
+                return [row[0] for row in cur.fetchall()]
+        except sqlite3.OperationalError:
+            return []
     
     # =========================================================================
     # FTS Search

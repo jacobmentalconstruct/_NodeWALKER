@@ -27,6 +27,10 @@ class FacetKind(Enum):
     DEFINITION = "definition"      # What is it? Identity/location
     COMPARISON = "comparison"      # How does X compare to Y?
     CUSTOM = "custom"              # Free-form sub-question
+    # Aligned with IntentLabel for forensic router
+    EXPLANATION = "explanation"    # Maps from IntentLabel.EXPLAIN
+    SUMMARY = "summary"           # Maps from IntentLabel.SUMMARIZE
+    MUTATION = "mutation"          # Maps from IntentLabel.MUTATION
 
 
 @dataclass
@@ -168,7 +172,7 @@ class KVPackPlan:
 
     This is what gets fed to the synthesis inference call.
     """
-    total_budget: int = 4000             # Max tokens
+    total_budget: int = 8000             # Max tokens
     packed_facets: List[PackedFacet] = field(default_factory=list)
     verbatim_expansions: List[VerbatimExpansion] = field(default_factory=list)
     tokens_used: int = 0
@@ -206,7 +210,7 @@ class GravityConfig:
     sufficiency_coverage_threshold: float = 0.7
 
     # --- KV budget ---
-    kv_token_budget: int = 4000
+    kv_token_budget: int = 8000
     facet_summary_max_tokens: int = 200
     verbatim_expansion_max_tokens: int = 500
     max_verbatim_expansions: int = 5

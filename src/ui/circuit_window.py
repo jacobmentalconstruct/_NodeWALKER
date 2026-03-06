@@ -26,6 +26,9 @@ from src.ui.panels.chat_pane import ChatPane
 from src.ui.panels.airlock_pane import AirlockPane
 from src.ui.panels.settings_modal import SettingsModal
 from src.walker.app_settings import AppSettings
+from src.walker.forensics.pipeline import run_forensic_query
+from src.walker.patcher import apply_patch, build_unified_diff
+from src.ui.panels.patch_approval_modal import PatchApprovalModal
 
 
 # =========================================================================
@@ -211,6 +214,7 @@ class CircuitHighlightingWindow:
         bus.subscribe("ACTIVATION_TOP", self._on_activations_updated)
         bus.subscribe("FOCUS_TARGET", self._on_focus_target)
         bus.subscribe("PIN_CONTEXT", self._on_pin_context_ui)
+        bus.subscribe("PATCH_PROPOSED", self._on_patch_proposed)
 
         # Start logic pane listeners
         self.explorer_pane.start()
@@ -410,7 +414,7 @@ class CircuitHighlightingWindow:
         self.sources_list.bind("<<ListboxSelect>>", self._on_source_clicked)
 
     def _build_status_bar(self, parent: tk.Widget):
-        """Build status bar with airlock checks."""
+        """Build status bar with airlock checks and mission log."""
         self.status_frame = ttk.LabelFrame(parent, text="System Status", padding=5)
         self.status_frame.pack(fill="x", padx=0, pady=(10, 0))
 
@@ -421,6 +425,15 @@ class CircuitHighlightingWindow:
             foreground="#FFAA00"
         )
         self.status_label.pack(anchor="w")
+
+        # Mission log label — shows scope/intent/evidence after forensic queries
+        self._mission_log_label = ttk.Label(
+            self.status_frame,
+            text="",
+            font=FONTS["code"],
+            foreground="#AAAAFF"
+        )
+        self._mission_log_label.pack(anchor="w")
 
     # =====================================================================
     # Context Menus
@@ -1263,6 +1276,48 @@ class CircuitHighlightingWindow:
     # Chat & Inference
     # =====================================================================
 
+    def _build_ui_state(self) -> dict:
+        """
+        Capture current UI selection state for the forensic pipeline.
+
+        MUST be called on the main (Tkinter) thread before spawning
+        the inference worker, since Tkinter widgets are not thread-safe.
+        """
+        state: Dict[str, Any] = {
+            "has_cartridge": self.walker is not None,
+            "pinned_items": [
+                {"label": p.label, "text": p.text, "chunk_id": p.chunk_id}
+                for p in self.chat_pane.pinned_items
+            ],
+        }
+
+        # Explorer selection
+        node_info = self.explorer_pane.get_selected_node_info()
+        if node_info:
+            state["selected_node_id"] = node_info["target_id"]
+            state["selected_node_type"] = node_info["target_type"]
+        else:
+            # Also check the Treeview directly
+            sel = self.explorer_tree.selection() if self.explorer_tree else ()
+            if sel:
+                data = self._node_data.get(sel[0], {})
+                state["selected_node_id"] = data.get("node_id", "")
+                state["selected_node_type"] = data.get("node_type", "")
+
+        # Preview selection
+        span = self.preview_pane.get_selected_span()
+        if span:
+            state["selected_chunk_id"] = span.get("chunk_id", "")
+            state["selected_file_path"] = span.get("file_path", "")
+            # Try to grab actual Tkinter text selection
+            if self.preview_text:
+                try:
+                    state["selected_text"] = self.preview_text.get("sel.first", "sel.last")
+                except Exception:
+                    state["selected_text"] = ""
+
+        return state
+
     def _on_send_query(self):
         """Handle chat query submission with async inference."""
         if not self.chat_input:
@@ -1274,6 +1329,9 @@ class CircuitHighlightingWindow:
 
         self.chat_input.delete("1.0", "end")
 
+        # Capture UI state on main thread BEFORE spawning worker
+        ui_state = self._build_ui_state()
+
         if self.chat_text:
             self.chat_text.config(state="normal")
             self.chat_text.insert("end", f"\nYou: {query}\n")
@@ -1284,7 +1342,9 @@ class CircuitHighlightingWindow:
         if hasattr(self, '_send_button'):
             self._send_button.config(state="disabled")
 
-        thread = threading.Thread(target=self._inference_worker, args=(query,), daemon=True)
+        thread = threading.Thread(
+            target=self._inference_worker, args=(query, ui_state), daemon=True
+        )
         thread.start()
 
     def _show_typing_indicator(self):
@@ -1294,22 +1354,49 @@ class CircuitHighlightingWindow:
             self.chat_text.config(state="disabled")
             self.chat_text.see("end")
 
-    def _inference_worker(self, query: str):
+    def _inference_worker(self, query: str, ui_state: dict = None):
+        """
+        Background inference worker.
+
+        If a walker is loaded, routes through the forensic pipeline
+        (scope/intent classification, referent binding, gravity walk).
+        Otherwise falls back to direct LLM chat.
+        """
         response = None
         citations = []
+        manifold_result = None
 
         try:
             if not self.llm_agent:
                 response = "[Error: LLM Agent not initialized. Load a cartridge first.]"
+            elif self.walker and ui_state:
+                # Route through forensic pipeline
+                manifold_result = run_forensic_query(
+                    query_text=query,
+                    walker=self.walker,
+                    llm_agent=self.llm_agent,
+                    ui_state=ui_state or {},
+                    session_db=self.session_db,
+                )
+                response = manifold_result.synthesis or "[No synthesis produced]"
+                # Build citations from evidence_ids
+                citations = [
+                    ("evidence", eid) for eid in (manifold_result.evidence_ids or [])
+                ]
             else:
+                # Direct LLM chat (no cartridge loaded)
                 session_id = self.session_id if self.session_id else "default"
                 response, citations = self.llm_agent.process_prompt(query, session_id)
         except Exception as e:
             response = f"[Error during inference: {str(e)}]"
 
-        self.parent_frame.after(0, self._update_chat_with_response, response, citations)
+        self.parent_frame.after(
+            0, self._update_chat_with_response, response, citations, manifold_result
+        )
 
-    def _update_chat_with_response(self, response: str, citations: list):
+    def _update_chat_with_response(self, response: str, citations: list,
+                                   manifold_result=None):
+        """Update chat UI with inference response and optional ManifoldResult."""
         if self.chat_text:
             self.chat_text.config(state="normal")
             end_pos = self.chat_text.index("end-1c")
@@ -1324,12 +1411,102 @@ class CircuitHighlightingWindow:
             for citation_type, citation_id in citations:
                 self.sources_list.insert("end", f"{citation_type}:{citation_id}")
 
+        # Update mission log in status bar when forensic result available
+        if manifold_result:
+            self._update_mission_log(manifold_result)
+
         if hasattr(self, '_send_button'):
             self._send_button.config(state="normal")
 
     # =====================================================================
     # Settings & Status
     # =====================================================================
+
+    # =====================================================================
+    # Patch Approval
+    # =====================================================================
+
+    def _on_patch_proposed(self, payload: dict) -> None:
+        """Handle PATCH_PROPOSED event — show approval modal on main thread."""
+        # Schedule on main thread since this may come from inference worker
+        self.parent_frame.after(0, self._show_patch_modal, payload)
+
+    def _show_patch_modal(self, payload: dict) -> None:
+        """Display the patch approval modal."""
+        proposal = payload.get("proposal")
+        verification = payload.get("verification")
+        evidence_bundle = payload.get("evidence_bundle", [])
+
+        if not proposal or not verification:
+            return
+
+        diff_text = build_unified_diff(proposal)
+        evidence_texts = [
+            e.get("content", f"[chunk: {e.get('chunk_id', '?')}]")
+            for e in evidence_bundle
+        ]
+
+        def on_approve():
+            result = apply_patch(proposal)
+            if result.success:
+                self.chat_pane.append_assistant_message(
+                    f"Patch applied to {result.file_path} "
+                    f"({result.lines_changed} lines changed)."
+                )
+            else:
+                self.chat_pane.append_assistant_message(
+                    f"Patch failed: {result.error}"
+                )
+            # Update chat widget
+            self._refresh_chat_display()
+
+        def on_reject():
+            self.chat_pane.append_assistant_message(
+                "Patch rejected by user."
+            )
+            self._refresh_chat_display()
+
+        modal = PatchApprovalModal(
+            parent=self.parent_frame,
+            proposal=proposal,
+            verification=verification,
+            diff_text=diff_text,
+            evidence_texts=evidence_texts,
+            on_approve=on_approve,
+            on_reject=on_reject,
+        )
+        modal.show()
+
+    def _refresh_chat_display(self) -> None:
+        """Refresh the chat text widget from chat_pane history."""
+        if not self.chat_text:
+            return
+        self.chat_text.config(state="normal")
+        history = self.chat_pane.get_chat_history()
+        if history:
+            last = history[-1]
+            role = "You" if last["role"] == "user" else "Assistant"
+            self.chat_text.insert("end", f"\n{role}: {last['content']}\n")
+        self.chat_text.config(state="disabled")
+        self.chat_text.see("end")
+
+    def _update_mission_log(self, result) -> None:
+        """Update the mission log label with forensic result metadata."""
+        try:
+            scope = result.scope.value if hasattr(result.scope, "value") else str(result.scope)
+            intent = result.intent.value if hasattr(result.intent, "value") else str(result.intent)
+            evidence_count = len(result.evidence_ids) if result.evidence_ids else 0
+            elapsed = result.elapsed_ms if hasattr(result, "elapsed_ms") else 0
+            drift = " | DRIFT" if result.drift_warnings else ""
+
+            text = (
+                f"[Forensic] scope={scope} intent={intent} "
+                f"evidence={evidence_count} elapsed={elapsed}ms{drift}"
+            )
+            if hasattr(self, "_mission_log_label"):
+                self._mission_log_label.config(text=text)
+        except Exception:
+            pass  # Non-critical
 
     def update_status(self):
         """Update airlock status (call after cartridge is loaded)."""

@@ -1,0 +1,187 @@
+YEP. That is a **real signal**.
+
+The walker found **something**, but it found the **wrong kind of something** and then the model confidently built a fake whole-app narrative around it.
+
+## What happened
+
+It almost certainly latched onto a **PyInstaller spec file** or similarly packaging-oriented artifact and treated that as the application's runtime architecture.
+
+That is why you got language like:
+
+* `Analysis`
+* `PYZ`
+* `EXE`
+* compilation
+* packaging
+* executable generation
+
+That is not a normal application data-flow explanation. That is **build artifact vocabulary**.
+
+So the system did not answer:
+
+> “How does the app work?”
+
+It answered:
+
+> “How might a packaging spec be interpreted as an app?”
+
+## Why this is actually useful
+
+This tells us a lot:
+
+### Good news
+
+* The system **is retrieving content now**
+* It is not just seeing filenames anymore
+* It can anchor on actual text from the manifold
+* It returned chunk citations, which means some retrieval path is alive
+
+### Bad news
+
+* The **retrieval policy is weak**
+* It is selecting **highly available but low-value artifacts**
+* It does not yet know that a spec/build file is usually **not the best source of application behavior**
+* It lacks a good **“runtime code vs packaging/config” importance model**
+
+So this is no longer “it can’t see content.”
+
+Now it is:
+
+> **it can see content, but it is choosing the wrong evidence for app-level explanation**
+
+That is a much better problem to have.
+
+## The actual bug class
+
+This is basically a **frontier ranking / source quality bug**.
+
+The walker likely asked something like:
+
+```text
+What relates to _ProjectMAPPER and app flow?
+```
+
+and the manifold gave it chunks that matched:
+
+* `_ProjectMAPPER`
+* executable
+* application
+* build
+* package
+
+A spec file can score surprisingly high on those terms.
+
+Then the LLM did what LLMs do:
+it turned the retrieved artifact into a coherent story.
+
+## So what needs to change
+
+You need an **app-summary source policy**.
+
+For questions like:
+
+* explain this application
+* summarize data flow
+* how does this app work
+* what are the key classes and functions
+
+the walker should **prefer**:
+
+1. `README*`
+2. `app.py`, `main.py`, entrypoints
+3. UI/controller/orchestrator files
+4. files with actual function/class bodies
+5. docs describing architecture
+
+and **down-rank**:
+
+* `.spec`
+* lockfiles
+* requirements
+* setup scripts
+* packaging metadata
+* build manifests
+
+## In plain terms
+
+Right now the walker is asking:
+
+> “What text matches this question?”
+
+It needs to ask:
+
+> “What text is most likely to describe runtime behavior?”
+
+Those are not the same thing.
+
+## The fix you want
+
+You need a **source-type prior** in ranking.
+
+Add a penalty or exclusion rule for app-summary / data-flow questions:
+
+### Strong down-rank
+
+* `.spec`
+* `package-lock.json`
+* `requirements.txt`
+* `setup*.bat`
+* `setup*.sh`
+* lock/config/build artifacts
+
+### Strong up-rank
+
+* `README*`
+* `app.py`
+* `main.py`
+* `*_window.py`
+* controller/orchestrator modules
+* files containing classes/functions with executable logic
+
+## Even better
+
+For “complete data flow” questions, make the pipeline do this on purpose:
+
+1. identify likely entrypoints
+2. identify orchestrator/controller files
+3. identify major classes/functions
+4. gather chunks from those
+5. only then synthesize
+
+That is a **different retrieval mode** than generic Q&A.
+
+## The most important sentence
+
+This result means:
+
+> the manifold is starting to work, but the walker needs **behavior-aware evidence selection**, not just text relevance.
+
+That is a huge improvement over “it sees nothing.”
+
+## Blunt verdict
+
+You just moved from:
+
+```text
+blind
+```
+
+to
+
+```text
+misled by the wrong artifact
+```
+
+And that is **excellent progress**, because artifact prioritization is fixable.
+
+## What I would call this next patch
+
+**“Runtime Source Prioritization for App-Level Questions”**
+
+If you want, I can turn this into a very tight builder addendum with:
+
+* trigger conditions
+* file ranking rules
+* exclusion list
+* retrieval order
+* fallback behavior.

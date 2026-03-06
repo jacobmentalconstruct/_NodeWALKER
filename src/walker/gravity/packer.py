@@ -11,6 +11,9 @@ Strategy:
 
 This is the bridge between the walker (which collects raw evidence)
 and the LLM (which synthesizes the final answer).
+
+SAFETY: The packer NEVER generates mutation/patch prompts.
+Mutation is handled exclusively by src/walker/mutation_prompt.py (Phase 2).
 """
 
 from typing import List, Dict, Optional, Tuple
@@ -296,6 +299,19 @@ class EvidencePacker:
                 parts.append(
                     f"### [[chunk:{ve.evidence_id}]] (mass={ve.mass:.2f})\n"
                     f"```\n{ve.text}\n```\n"
+                )
+        else:
+            # Fallback: include facet evidence inline when no verbatim
+            # expansions were selected (avoids empty synthesis prompts)
+            has_real_content = any(
+                pf.summary and pf.summary != "[No evidence collected]"
+                for pf in plan.packed_facets
+            )
+            if has_real_content:
+                parts.append("## Evidence Content\n")
+                parts.append(
+                    "(No high-gravity verbatim expansions available. "
+                    "Facet summaries above contain the collected evidence.)\n"
                 )
 
         return "\n".join(parts)

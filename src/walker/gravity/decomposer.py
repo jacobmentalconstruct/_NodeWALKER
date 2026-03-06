@@ -11,9 +11,12 @@ Fallback: deterministic heuristic decomposition when LLM unavailable.
 import json
 import re
 import uuid
-from typing import List, Optional
+from typing import List, Optional, TYPE_CHECKING
 
 from src.walker.gravity.types import Facet, FacetKind, GravityConfig
+
+if TYPE_CHECKING:
+    from src.walker.forensics.types import ReferentBinding, ScopeLabel
 
 
 # Maps keywords in LLM output to FacetKind
@@ -64,31 +67,57 @@ class FacetDecomposer:
         self.llm_agent = llm_agent
         self.config = config or GravityConfig()
 
-    def decompose(self, query: str) -> List[Facet]:
+    def decompose(
+        self,
+        query: str,
+        referent: Optional["ReferentBinding"] = None,
+        scope: Optional["ScopeLabel"] = None,
+    ) -> List[Facet]:
         """
         Decompose a query into facets.
+
+        Args:
+            query: The user's query string.
+            referent: Optional ReferentBinding from the forensic router.
+                      When provided, seeds facet generation from the bound target.
+            scope: Optional ScopeLabel from the forensic router.
+                   When CARTRIDGE, starts from manifest-level questions.
 
         Tries LLM first, falls back to heuristic if unavailable.
         """
         if not query.strip():
             return [self._make_facet(FacetKind.DEFINITION, query or "?", 1.0)]
 
-        # Try LLM decomposition
+        # Try LLM decomposition (with referent context if available)
         if self.llm_agent:
-            facets = self._decompose_llm(query)
+            facets = self._decompose_llm(query, referent=referent)
             if facets:
                 return facets[:self.config.max_facets]
 
         # Fallback: heuristic decomposition
-        return self._decompose_heuristic(query)
+        return self._decompose_heuristic(query, referent=referent, scope=scope)
 
     # =========================================================================
     # LLM Decomposition
     # =========================================================================
 
-    def _decompose_llm(self, query: str) -> List[Facet]:
+    def _decompose_llm(
+        self,
+        query: str,
+        referent: Optional["ReferentBinding"] = None,
+    ) -> List[Facet]:
         """Decompose using LLM helper call."""
-        prompt = f"Decompose this query into sub-questions:\n\n{query}"
+        referent_hint = ""
+        if referent and referent.display_label:
+            referent_hint = (
+                f"\n\nContext: The user is referring to: {referent.display_label}"
+            )
+            if referent.node_id:
+                referent_hint += f" (node_id: {referent.node_id})"
+            if referent.file_path:
+                referent_hint += f" (file: {referent.file_path})"
+
+        prompt = f"Decompose this query into sub-questions:\n\n{query}{referent_hint}"
 
         try:
             raw = self.llm_agent.call_helper(
@@ -138,19 +167,31 @@ class FacetDecomposer:
     # Heuristic Decomposition
     # =========================================================================
 
-    def _decompose_heuristic(self, query: str) -> List[Facet]:
+    def _decompose_heuristic(
+        self,
+        query: str,
+        referent: Optional["ReferentBinding"] = None,
+        scope: Optional["ScopeLabel"] = None,
+    ) -> List[Facet]:
         """
         Deterministic fallback decomposition.
 
         Generates facets based on query patterns without LLM.
+        When referent is provided, uses it to seed the definition facet.
         """
         q = query.lower().strip()
         facets = []
 
+        # Determine subject from referent or query
+        if referent and referent.display_label:
+            subject = referent.display_label
+        else:
+            subject = self._extract_subject(query)
+
         # Always include a definition facet
         facets.append(self._make_facet(
             FacetKind.DEFINITION,
-            f"What is {self._extract_subject(query)}?",
+            f"What is {subject}?",
             1.0,
         ))
 

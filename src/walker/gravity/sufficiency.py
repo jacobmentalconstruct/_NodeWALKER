@@ -204,6 +204,40 @@ class SufficiencyCritic:
 
         return False, ""
 
+    def to_sufficiency_summary(
+        self,
+        facets: List[Facet],
+        tokens_used: int = 0,
+    ):
+        """
+        Build a SufficiencySummary wrapping the gravity SufficiencyReport.
+
+        Returns a forensics.types.SufficiencySummary.
+        """
+        from src.walker.forensics.types import SufficiencySummary, FacetResult
+
+        report = self.evaluate_global(facets, tokens_used)
+        facet_results = []
+        for f in facets:
+            fs = self.evaluate_facet(f)
+            facet_results.append(FacetResult(
+                facet_id=f.facet_id,
+                question=f.question,
+                evidence_count=fs.evidence_count,
+                heavy_evidence_count=fs.heavy_evidence_count,
+                sufficient=fs.level == SufficiencyLevel.SUFFICIENT,
+                summary=f.summary,
+            ))
+
+        return SufficiencySummary(
+            report=report,
+            tokens_used=tokens_used,
+            search_party_needed=(
+                not report.should_stop and not report.all_facets_answerable
+            ),
+            facet_summaries=facet_results,
+        )
+
     def _is_frontier_cold(self, recent_scores: List[float]) -> bool:
         """
         Check if the frontier has gone cold (relevance decay).

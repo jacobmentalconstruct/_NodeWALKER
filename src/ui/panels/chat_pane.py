@@ -142,6 +142,30 @@ class ChatPane:
         """Get sources used in current response."""
         return self.sources_used
 
+    def append_user_message(self, text: str) -> None:
+        """Append a user message to chat history (without calling LLM)."""
+        self.add_message("user", text)
+
+    def append_assistant_message(self, text: str, sources: list = None) -> None:
+        """
+        Append an assistant message with optional source references.
+
+        Args:
+            text: The assistant's response text.
+            sources: List of (target_type, target_id) tuples for citations.
+        """
+        self.add_message("assistant", text)
+
+        if sources:
+            self.sources_used.clear()
+            for target_type, target_id in sources:
+                self.sources_used.append(SourceItem(
+                    target_type=target_type,
+                    target_id=target_id,
+                    score=0.0,
+                    kind="CITED",
+                ))
+
     def on_source_clicked(self, target_type: str, target_id: str) -> None:
         """Handle click on a source - focus the preview pane."""
         self.bus.emit(FOCUS_TARGET, {

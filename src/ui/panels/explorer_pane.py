@@ -203,6 +203,24 @@ class ExplorerPane:
             reverse=True
         )
 
+    def get_selected_node_info(self) -> dict:
+        """
+        Get info about the currently active (highest-scoring) hot target.
+
+        Returns dict with keys: target_type, target_id, score.
+        Returns None if nothing is active.
+        """
+        targets = self.get_hot_targets()
+        if not targets:
+            return None
+
+        top = targets[0]
+        return {
+            "target_type": top.target_type,
+            "target_id": top.target_id,
+            "score": top.score,
+        }
+
     def render_heat_indicator(self, score: float, max_score: float = 100.0) -> str:
         """
         Render a visual heat indicator.

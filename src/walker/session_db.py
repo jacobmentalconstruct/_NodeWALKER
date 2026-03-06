@@ -91,6 +91,39 @@ class SessionDB:
             )
         """)
 
+        # Mission logging: per-query walk runs
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS query_runs (
+                run_id TEXT PRIMARY KEY,
+                query_id TEXT NOT NULL,
+                walk_id TEXT NOT NULL,
+                facet_id TEXT,
+                started_at TEXT NOT NULL,
+                finished_at TEXT,
+                total_nodes INTEGER DEFAULT 0,
+                total_evidence INTEGER DEFAULT 0,
+                sufficiency_level TEXT,
+                reason TEXT,
+                FOREIGN KEY (query_id) REFERENCES queries (query_id)
+            )
+        """)
+
+        # Mission logging: per-step records
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS query_steps (
+                step_id TEXT PRIMARY KEY,
+                run_id TEXT NOT NULL,
+                walk_id TEXT NOT NULL,
+                facet_id TEXT,
+                node_id TEXT,
+                chunk_id TEXT,
+                score REAL,
+                timestamp TEXT NOT NULL,
+                reason TEXT,
+                FOREIGN KEY (run_id) REFERENCES query_runs (run_id)
+            )
+        """)
+
         conn.commit()
         conn.close()
 
@@ -219,3 +252,113 @@ class SessionDB:
         conn.close()
 
         return [row[0] for row in results]
+
+    # =========================================================================
+    # Mission Logging
+    # =========================================================================
+
+    def insert_query_run(
+        self, query_id: str, walk_id: str, facet_id: str = None,
+    ) -> str:
+        """Create a new query run record. Returns run_id."""
+        run_id = str(uuid4())
+        conn = self._get_connection()
+        cursor = conn.cursor()
+
+        cursor.execute("""
+            INSERT INTO query_runs (run_id, query_id, walk_id, facet_id, started_at)
+            VALUES (?, ?, ?, ?, ?)
+        """, (run_id, query_id, walk_id, facet_id,
+              datetime.utcnow().isoformat() + "Z"))
+
+        conn.commit()
+        conn.close()
+        return run_id
+
+    def end_query_run(
+        self, run_id: str, total_nodes: int = 0, total_evidence: int = 0,
+        sufficiency_level: str = "", reason: str = "",
+    ) -> None:
+        """Mark a query run as finished with stats."""
+        conn = self._get_connection()
+        cursor = conn.cursor()
+
+        cursor.execute("""
+            UPDATE query_runs
+            SET finished_at = ?, total_nodes = ?, total_evidence = ?,
+                sufficiency_level = ?, reason = ?
+            WHERE run_id = ?
+        """, (datetime.utcnow().isoformat() + "Z", total_nodes,
+              total_evidence, sufficiency_level, reason, run_id))
+
+        conn.commit()
+        conn.close()
+
+    def insert_query_step(
+        self, run_id: str, walk_id: str, facet_id: str = None,
+        node_id: str = None, chunk_id: str = None,
+        score: float = 0.0, reason: str = "",
+    ) -> str:
+        """Log a single expansion step. Returns step_id."""
+        step_id = str(uuid4())
+        conn = self._get_connection()
+        cursor = conn.cursor()
+
+        cursor.execute("""
+            INSERT INTO query_steps
+                (step_id, run_id, walk_id, facet_id, node_id, chunk_id, score, timestamp, reason)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, (step_id, run_id, walk_id, facet_id, node_id, chunk_id,
+              score, datetime.utcnow().isoformat() + "Z", reason))
+
+        conn.commit()
+        conn.close()
+        return step_id
+
+    def get_query_steps(self, run_id: str) -> List[dict]:
+        """Get all steps for a query run."""
+        conn = self._get_connection()
+        cursor = conn.cursor()
+
+        cursor.execute("""
+            SELECT step_id, facet_id, node_id, chunk_id, score, timestamp, reason
+            FROM query_steps
+            WHERE run_id = ?
+            ORDER BY timestamp
+        """, (run_id,))
+
+        results = cursor.fetchall()
+        conn.close()
+
+        return [
+            {
+                "step_id": row[0], "facet_id": row[1],
+                "node_id": row[2], "chunk_id": row[3],
+                "score": row[4], "timestamp": row[5], "reason": row[6],
+            }
+            for row in results
+        ]
+
+    def summarize_run(self, run_id: str) -> dict:
+        """Get summary stats for a run."""
+        conn = self._get_connection()
+        cursor = conn.cursor()
+
+        cursor.execute("""
+            SELECT total_nodes, total_evidence, sufficiency_level, reason,
+                   started_at, finished_at
+            FROM query_runs
+            WHERE run_id = ?
+        """, (run_id,))
+
+        row = cursor.fetchone()
+        conn.close()
+
+        if not row:
+            return {}
+
+        return {
+            "total_nodes": row[0], "total_evidence": row[1],
+            "sufficiency_level": row[2], "reason": row[3],
+            "started_at": row[4], "finished_at": row[5],
+        }

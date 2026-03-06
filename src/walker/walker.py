@@ -92,6 +92,12 @@ class NodeWalker:
         self._last_activation_emit_time = 0
         self._activation_emit_debounce = 0.1  # seconds, max 10/sec
 
+        # Escape detection state
+        self._recent_expansions: List[str] = []     # Last N expanded node IDs
+        self._recent_cluster_ids: List[str] = []    # Parent IDs of recent expansions
+        self._escape_mode: bool = False
+        self._current_query: str = ""
+
         # Capabilities (set by assess_readiness)
         self._readiness: Optional[ReadinessReport] = None
     
@@ -202,6 +208,12 @@ class NodeWalker:
     
     def _init_walk(self, query: str):
         """Initialize state for a new walk"""
+        # Store query for escape re-seeding
+        self._current_query = query
+        self._recent_expansions.clear()
+        self._recent_cluster_ids.clear()
+        self._escape_mode = False
+
         # Create scorer with policy
         self.scorer = Scorer(self.config.policy)
 
@@ -327,16 +339,66 @@ class NodeWalker:
     # =========================================================================
     
     def _traverse_loop(self):
-        """Main traversal loop: expand highest-scoring candidates"""
+        """Main traversal loop: expand highest-scoring candidates with escape detection."""
         while not self.scorer.should_stop():
+            # Check escape trigger
+            if self.scorer.should_trigger_escape(
+                recent_clusters=self._recent_cluster_ids,
+            ):
+                self._handle_escape()
+
             candidate = self.scorer.pop_best_candidate()
             if not candidate:
                 break
-            
+
+            # Track for escape detection
+            self._recent_expansions.append(candidate.target_id)
+            if len(self._recent_expansions) > 20:
+                self._recent_expansions.pop(0)
+
+            # Track cluster (parent of expanded node)
+            if candidate.target_type == "node":
+                node = self.structure.get_node(candidate.target_id)
+                if node and node.parent_id:
+                    self._recent_cluster_ids.append(node.parent_id)
+                    if len(self._recent_cluster_ids) > 10:
+                        self._recent_cluster_ids.pop(0)
+
             # Expand this candidate
             self._expand_candidate(candidate)
             self.scorer.mark_expansion()
     
+    def _handle_escape(self):
+        """
+        Escape a stuck cluster by switching traversal strategy.
+
+        Re-seeds from FTS using the original query, filtering to unvisited
+        nodes only. Resets cluster tracking so escape doesn't re-trigger
+        immediately.
+        """
+        self._escape_mode = True
+
+        # Re-seed from FTS using the original query
+        if self._current_query:
+            results = self.db.fts_search_chunks(
+                self._current_query,
+                limit=self.config.policy.semantic_top_k,
+            )
+            for chunk_id, rank in results:
+                if chunk_id not in self.scorer.visited_chunks:
+                    candidate = self.scorer.create_candidate(
+                        target_id=chunk_id,
+                        target_type="chunk",
+                        operator=OperatorType.QUERY_SEMANTIC,
+                        source_id="escape",
+                        semantic=0.8,
+                        distance=0,
+                    )
+                    self.scorer.add_candidate(candidate)
+
+        # Reset cluster tracking
+        self._recent_cluster_ids.clear()
+
     def _expand_candidate(self, candidate):
         """Expand a single candidate"""
         target_id = candidate.target_id
