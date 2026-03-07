@@ -115,13 +115,25 @@ class FacetDecomposer:
             if referent.node_id:
                 referent_hint += f" (node_id: {referent.node_id})"
             if referent.file_path:
-                referent_hint += f" (file: {referent.file_path})"
+                # Show just the filename, not the full system path
+                fp = referent.file_path.replace("\\", "/")
+                short_path = fp.rsplit("/", 1)[-1] if "/" in fp else fp
+                referent_hint += f" (file: {short_path})"
+
+        # Add world context if available
+        world_hint = getattr(self, 'world_hint', '')
+        if world_hint:
+            referent_hint += f"\n{world_hint}"
 
         prompt = f"Decompose this query into sub-questions:\n\n{query}{referent_hint}"
 
+        # Use prompt library if available, fall back to hardcoded default
+        pl = getattr(self, 'prompt_library', None)
+        decompose_sys = pl.active_text("decomposition_system") if pl else _DECOMPOSE_SYSTEM
+
         try:
             raw = self.llm_agent.call_helper(
-                system=_DECOMPOSE_SYSTEM,
+                system=decompose_sys,
                 prompt=prompt,
                 max_tokens=512,
             )

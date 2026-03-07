@@ -1,462 +1,8 @@
-Dump: C:\Users\jacob\Documents\_UsefulDataCurationTools\_NodeWALKER
+Dump: C:\Users\jacob\Documents\_UsefulDataCurationTools\_NodeWALKER\src
 
 
 --------------------------------------------------------------------------------
-FILE: .gitignore
---------------------------------------------------------------------------------
-# Python
-__pycache__/
-*.py[cod]
-*$py.class
-*.so
-.Python
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
-*.egg-info/
-.installed.cfg
-*.egg
-
-# Virtual environments
-venv/
-ENV/
-env/
-.venv/
-
-# IDE
-.idea/
-.vscode/
-*.swp
-*.swo
-*~
-
-# OS
-.DS_Store
-Thumbs.db
-
-# Project specific
-*.db
-!test_*.db
-nodewalker_notes.db
-*.log
-nul
---------------------------------------------------------------------------------
-FILE: LICENSE.md
---------------------------------------------------------------------------------
-# MIT License
-
-Copyright (c) 2025 Jacob Lambert / Systems Thinker
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-
---------------------------------------------------------------------------------
-FILE: pyproject.toml
---------------------------------------------------------------------------------
-[build-system]
-requires = ["setuptools>=45", "wheel", "setuptools_scm[toml]>=6.2"]
-build-backend = "setuptools.build_meta"
-
-[project]
-name = "nodewalker"
-version = "0.1.0"
-description = "NodeWALKER - Tripartite Cartridge Traversal Engine with Circuit Highlighting"
-readme = "README.md"
-requires-python = ">=3.11,<3.13"
-license = {text = "MIT"}
-authors = [
-    {name = "NodeWALKER Team"}
-]
-keywords = ["code-analysis", "cartridge", "circuit-highlighting", "llm", "ollama"]
-
-dependencies = [
-    "ollama>=0.1.0",
-]
-
-[project.optional-dependencies]
-dev = [
-    "pytest>=7.0.0",
-    "black>=23.0.0",
-    "pylint>=2.0.0",
-]
-
-[tool.setuptools]
-packages = ["src"]
-
-[tool.black]
-line-length = 100
-target-version = ['py311']
-
-[tool.pylint.messages_control]
-disable = ["C0111"]  # missing-docstring
-
---------------------------------------------------------------------------------
-FILE: README.md
---------------------------------------------------------------------------------
-# Node Walker
-
-**Tripartite Cartridge Traversal Engine - Systems Thinker Edition**
-
-A production-grade traversal engine for Tripartite DataSTORE cartridges with multi-gradient exploration and decision memory.
-
-## Quick Start
-
-```bash
-# Setup (Windows)
-setup_env.bat
-
-# Or manually
-python -m venv venv
-venv\Scripts\activate
-pip install -r requirements.txt
-
-# Run application
-python -m src.app
-
-# Run tests
-python -m src.test_walker
-```
-
-## Architecture
-
-```
-_NodeWALKER/
-├── 📁 assets/icons/
-├── 📁 src/
-│   ├── 📁 walker/          # Core traversal engine
-│   │   ├── types.py        # All dataclasses
-│   │   ├── db.py           # SQLite connection
-│   │   ├── manifest.py     # Readiness checks
-│   │   ├── cas.py          # CAS resolution
-│   │   ├── structure.py    # Tree operators
-│   │   ├── chunks.py       # Chunk operators
-│   │   ├── graph.py        # Graph operators
-│   │   ├── scoring.py      # S_total formula
-│   │   ├── walker.py       # Main orchestrator
-│   │   ├── policy.py       # Policy selection
-│   │   ├── notes.py        # Decision memory
-│   │   ├── signature.py    # Fingerprinting
-│   │   └── antidata.py     # Rule engine
-│   ├── 📁 ui/              # Tkinter interface
-│   │   ├── theme.py        # THEME_SPEC colors
-│   │   └── main_window.py  # Main UI
-│   └── app.py              # Entry point
-├── README.md
-├── requirements.txt
-└── setup_env.bat
-```
-
-## Features
-
-### Multi-Gradient Traversal
-- **Structural**: Parent/children/siblings via tree_nodes
-- **Adjacency**: Chunk continuity via overlap chains
-- **Semantic**: Vector similarity (when embeddings available)
-- **Graph**: Knowledge graph relationships
-
-### Scoring Formula
-```
-S_total = w1*S_sem + w2*S_struct + w3*S_adj + w4*S_graph + w5*S_source
-          - dup_penalty - anti_data_penalty
-```
-
-### Decision Memory
-- Notes database for operational learning
-- Anti-data rules (block/penalize/warn)
-- Cartridge profile matching via signature hash
-
-### Output Contract
-Every walk produces a `TraversalArtifact` with:
-- Collected content with full provenance
-- Deterministic trace for reproducibility
-- Explicit traversal paths
-
-## Usage
-
-### GUI Application
-```bash
-python -m src.app
-```
-
-### Programmatic API
-```python
-from src.walker import CartridgeDB, NodeWalker, WalkerConfig
-
-# Connect to cartridge
-db = CartridgeDB()
-db.connect(Path("my_cartridge.db"))
-
-# Create walker and assess readiness
-walker = NodeWalker(db)
-readiness = walker.assess_readiness()
-
-if readiness.level != ReadinessLevel.BLOCKED:
-    # Execute walk
-    artifact = walker.walk(query="find authentication")
-    
-    for block in artifact.content_blocks:
-        print(block["context_prefix"])
-        print(block["content"])
-```
-
-## Theme
-
-Follows THEME_SPEC.md:
-- Primary Background: `#1e1e2f`
-- Secondary Background: `#151521`
-- Action Accent: `#007ACC`
-- Status Accent: `#00FF00`
-
-## License
-
-MIT
-
---------------------------------------------------------------------------------
-FILE: requirements.txt
---------------------------------------------------------------------------------
-# Node Walker - Tripartite Cartridge Traversal Engine with Circuit Highlighting
-# Python 3.11+ required (3.13 may have compatibility issues with some dependencies)
-
-# Core dependencies
-ollama>=0.1.0          # For local Ollama LLM inference and model management
-
-# Optional: for enhanced vector operations
-# numpy>=1.24.0
-
-# Development only
-# pytest>=7.0.0
-# black>=23.0.0
-# pylint>=2.0.0
-
---------------------------------------------------------------------------------
-FILE: run.bat
---------------------------------------------------------------------------------
-@echo off
-setlocal
-title _NodeWALKER Launcher
-
-echo =============================================
-echo          Launching The _NodeWALKER v1.0
-echo =============================================
-
-:: 1. Check if the virtual environment exists
-if not exist ".venv\Scripts\activate.bat" (
-    echo [ERROR] Virtual environment not found.
-    echo Please ensure .venv is located in this directory.
-    pause
-    exit /b
-)
-
-:: 2. Activate the environment
-echo [1/2] Activating virtual environment...
-call .venv\Scripts\activate.bat
-
-:: 3. Run the application
-echo [2/2] Starting the _NodeWALKER...
-python -m src.app
-
-:: 4. Handle exit
-if %ERRORLEVEL% neq 0 (
-    echo.
-    echo [alert] Application closed with an error (Code: %ERRORLEVEL%)
-    pause
-) else (
-    echo.
-    echo Application closed successfully.
-)
-
-deactivate
-endlocal
---------------------------------------------------------------------------------
-FILE: setup_env.bat
---------------------------------------------------------------------------------
-@echo off
-setlocal enabledelayedexpansion
-
-echo ============================================
-echo Node Walker - Environment Setup
-echo ============================================
-echo.
-
-echo Checking for Python 3.11...
-:: Use the py launcher to strictly check for and enforce 3.11
-py -3.11 --version >nul 2>&1
-if %errorlevel% neq 0 (
-    echo ERROR: Python 3.11 was not found on your system.
-    echo.
-    echo Please install Python 3.11 from https://www.python.org/
-    echo Ensure you install the "Python Launcher for Windows" during setup.
-    pause
-    exit /b 1
-)
-
-echo Python 3.11 detected successfully.
-echo.
-
-echo Creating virtual environment (.venv) strictly with Python 3.11...
-if exist .venv (
-    echo Removing existing virtual environment...
-    rmdir /s /q .venv >nul 2>&1
-)
-
-:: Enforce 3.11 for the venv creation
-py -3.11 -m venv .venv
-if %errorlevel% neq 0 (
-    echo ERROR: Failed to create virtual environment.
-    pause
-    exit /b 1
-)
-
-echo.
-echo Activating virtual environment...
-call .venv\Scripts\activate.bat
-
-echo.
-echo Upgrading pip...
-python -m pip install --upgrade pip setuptools wheel >nul 2>&1
-
-echo.
-echo Installing dependencies from requirements.txt...
-pip install -r requirements.txt
-if %errorlevel% neq 0 (
-    echo WARNING: Some dependencies failed to install.
-    echo This may be OK if ollama library installation failed.
-    echo.
-)
-
-echo.
-echo ============================================
-echo Setup Complete!
-echo ============================================
-echo.
-echo NEXT STEPS:
-echo.
-echo 1. Install and run Ollama:
-echo    - Download from: https://ollama.ai
-echo    - Run: ollama serve
-echo    - In another terminal: ollama pull phi-3-mini
-echo.
-echo 2. Run Node Walker:
-echo    - Activate: .venv\Scripts\activate
-echo    - Run: python -m src.app
-echo.
-echo 3. Access Circuit Highlighting:
-echo    - Load a cartridge file
-echo    - Click "Circuit Highlighting" tab
-echo    - Click Settings (gear icon) to install models
-echo.
-echo ============================================
-pause
---------------------------------------------------------------------------------
-FILE: _NodeWALKER.spec
---------------------------------------------------------------------------------
-# -*- mode: python ; coding: utf-8 -*-
-# Node Walker - PyInstaller Spec File
-
-block_cipher = None
-
-a = Analysis(
-    ['src/app.py'],
-    pathex=[],
-    binaries=[],
-    datas=[],
-    hiddenimports=[
-        'src.walker',
-        'src.walker.types',
-        'src.walker.db',
-        'src.walker.manifest',
-        'src.walker.cas',
-        'src.walker.structure',
-        'src.walker.chunks',
-        'src.walker.graph',
-        'src.walker.scoring',
-        'src.walker.walker',
-        'src.walker.policy',
-        'src.walker.notes',
-        'src.walker.signature',
-        'src.walker.antidata',
-        'src.ui',
-        'src.ui.theme',
-        'src.ui.main_window',
-    ],
-    hookspath=[],
-    hooksconfig={},
-    runtime_hooks=[],
-    excludes=[],
-    win_no_prefer_redirects=False,
-    win_private_assemblies=False,
-    cipher=block_cipher,
-    noarchive=False,
-)
-
-pyz = PYZ(a.pure, a.zipped_data, cipher=block_cipher)
-
-exe = EXE(
-    pyz,
-    a.scripts,
-    a.binaries,
-    a.zipfiles,
-    a.datas,
-    [],
-    name='NodeWalker',
-    debug=False,
-    bootloader_ignore_signals=False,
-    strip=False,
-    upx=True,
-    upx_exclude=[],
-    runtime_tmpdir=None,
-    console=False,
-    disable_windowed_traceback=False,
-    argv_emulation=False,
-    target_arch=None,
-    codesign_identity=None,
-    entitlements_file=None,
-    icon='assets/icons/app.ico',
-)
-
---------------------------------------------------------------------------------
-FILE: .claude\settings.local.json
---------------------------------------------------------------------------------
-{
-  "permissions": {
-    "allow": [
-      "Bash(python -c \":*)",
-      "Bash(wc -l /c/Users/jacob/Documents/_UsefulDataCurationTools/_NodeWALKER/src/walker/gravity/*.py)",
-      "Bash(python -c \"import sys,json; data=json.load\\(sys.stdin\\); print\\(data[0][''text'']\\)\")",
-      "Bash(python -m py_compile \"C:/Users/jacob/Documents/_UsefulDataCurationTools/_NodeWALKER/src/walker/gravity/pipeline.py\")",
-      "Bash(python -m py_compile \"C:/Users/jacob/Documents/_UsefulDataCurationTools/_NodeWALKER/src/walker/forensics/pipeline.py\")",
-      "Bash(python -m py_compile \"C:/Users/jacob/Documents/_UsefulDataCurationTools/_NodeWALKER/src/walker/gravity/packer.py\")",
-      "Bash(python -m py_compile \"C:/Users/jacob/Documents/_UsefulDataCurationTools/_NodeWALKER/src/walker/gravity/types.py\")"
-    ]
-  }
-}
-
---------------------------------------------------------------------------------
-FILE: src\app.py
+FILE: app.py
 --------------------------------------------------------------------------------
 """
 Node Walker - Main Application Entry Point
@@ -485,7 +31,7 @@ if __name__ == "__main__":
     main()
 
 --------------------------------------------------------------------------------
-FILE: src\test_walker.py
+FILE: test_walker.py
 --------------------------------------------------------------------------------
 #!/usr/bin/env python3
 """
@@ -939,7 +485,7 @@ if __name__ == "__main__":
     run_tests()
 
 --------------------------------------------------------------------------------
-FILE: src\__init__.py
+FILE: __init__.py
 --------------------------------------------------------------------------------
 """
 Node Walker - Tripartite Cartridge Traversal Engine
@@ -950,7 +496,7 @@ __version__ = "3.0.0"
 __app_name__ = "Node Walker"
 
 --------------------------------------------------------------------------------
-FILE: src\ui\circuit_window.py
+FILE: ui\circuit_window.py
 --------------------------------------------------------------------------------
 """
 Circuit Highlighting Window Integration.
@@ -2508,7 +2054,7 @@ class CircuitHighlightingWindow:
         self.chat_pane.stop()
 
 --------------------------------------------------------------------------------
-FILE: src\ui\event_bus.py
+FILE: ui\event_bus.py
 --------------------------------------------------------------------------------
 """
 Event Bus for UI ↔ Engine Communication.
@@ -2594,7 +2140,7 @@ TOOL_CHANGED = "TOOL_CHANGED"
 PATCH_PROPOSED = "PATCH_PROPOSED"
 
 --------------------------------------------------------------------------------
-FILE: src\ui\main_window.py
+FILE: ui\main_window.py
 --------------------------------------------------------------------------------
 """
 Node Walker Main Window
@@ -3316,7 +2862,7 @@ def run_app():
     root.mainloop()
 
 --------------------------------------------------------------------------------
-FILE: src\ui\theme.py
+FILE: ui\theme.py
 --------------------------------------------------------------------------------
 """
 Theme Configuration
@@ -3740,7 +3286,7 @@ def configure_canvas(canvas: tk.Canvas):
     )
 
 --------------------------------------------------------------------------------
-FILE: src\ui\__init__.py
+FILE: ui\__init__.py
 --------------------------------------------------------------------------------
 """
 Node Walker UI Module
@@ -3751,7 +3297,7 @@ from src.ui.theme import setup_theme, COLORS
 from src.ui.main_window import NodeWalkerApp
 
 --------------------------------------------------------------------------------
-FILE: src\ui\panels\airlock_pane.py
+FILE: ui\panels\airlock_pane.py
 --------------------------------------------------------------------------------
 """
 Airlock Pane - Pre-Flight Checks.
@@ -3918,7 +3464,7 @@ class AirlockPane:
         return "\n".join(lines)
 
 --------------------------------------------------------------------------------
-FILE: src\ui\panels\chat_pane.py
+FILE: ui\panels\chat_pane.py
 --------------------------------------------------------------------------------
 """
 Chat Pane (Right Dock).
@@ -4096,7 +3642,7 @@ class ChatPane:
         })
 
 --------------------------------------------------------------------------------
-FILE: src\ui\panels\explorer_pane.py
+FILE: ui\panels\explorer_pane.py
 --------------------------------------------------------------------------------
 """
 Explorer Pane (Left Dock).
@@ -4333,7 +3879,7 @@ class ExplorerPane:
         return f"[{bar}] {score:.1f}"
 
 --------------------------------------------------------------------------------
-FILE: src\ui\panels\patch_approval_modal.py
+FILE: ui\panels\patch_approval_modal.py
 --------------------------------------------------------------------------------
 """
 Patch Approval Modal.
@@ -4583,7 +4129,7 @@ class PatchApprovalModal:
             self.on_reject()
 
 --------------------------------------------------------------------------------
-FILE: src\ui\panels\preview_pane.py
+FILE: ui\panels\preview_pane.py
 --------------------------------------------------------------------------------
 """
 Preview Pane (Center Stage).
@@ -4790,7 +4336,7 @@ class PreviewPane:
         }
 
 --------------------------------------------------------------------------------
-FILE: src\ui\panels\settings_modal.py
+FILE: ui\panels\settings_modal.py
 --------------------------------------------------------------------------------
 """
 Settings Modal — Dual Model Slot Configuration.
@@ -5198,7 +4744,7 @@ class SettingsModal:
         threading.Thread(target=test, daemon=True).start()
 
 --------------------------------------------------------------------------------
-FILE: src\ui\panels\tool_palette.py
+FILE: ui\panels\tool_palette.py
 --------------------------------------------------------------------------------
 """
 Tool Palette - Interaction Mode Switcher.
@@ -5337,7 +4883,7 @@ class ToolPalette:
         return "\n".join(lines)
 
 --------------------------------------------------------------------------------
-FILE: src\ui\panels\view_palette.py
+FILE: ui\panels\view_palette.py
 --------------------------------------------------------------------------------
 """
 View Palette - Icon-Based View Switcher.
@@ -5464,12 +5010,12 @@ class ViewPalette:
         return "\n".join(lines)
 
 --------------------------------------------------------------------------------
-FILE: src\ui\panels\__init__.py
+FILE: ui\panels\__init__.py
 --------------------------------------------------------------------------------
 """UI panels for NodeWALKER."""
 
 --------------------------------------------------------------------------------
-FILE: src\walker\activation_store.py
+FILE: walker\activation_store.py
 --------------------------------------------------------------------------------
 """
 In-Memory Activation Aggregator.
@@ -5549,7 +5095,7 @@ class ActivationStore:
         return sorted_events[:5]
 
 --------------------------------------------------------------------------------
-FILE: src\walker\activation_types.py
+FILE: walker\activation_types.py
 --------------------------------------------------------------------------------
 """
 Activation Event Schema for Neural Circuit Highlighting.
@@ -5648,7 +5194,7 @@ class ActivationEvent:
         return cls(**d_copy)
 
 --------------------------------------------------------------------------------
-FILE: src\walker\antidata.py
+FILE: walker\antidata.py
 --------------------------------------------------------------------------------
 """
 Anti-Data Module
@@ -5939,7 +5485,7 @@ class AntiDataEngine:
         }
 
 --------------------------------------------------------------------------------
-FILE: src\walker\app_settings.py
+FILE: walker\app_settings.py
 --------------------------------------------------------------------------------
 """
 Persistent Application Settings with Model Slots.
@@ -6051,7 +5597,7 @@ class AppSettings:
         return self.big_brain.is_configured() and self.helper.is_configured()
 
 --------------------------------------------------------------------------------
-FILE: src\walker\cas.py
+FILE: walker\cas.py
 --------------------------------------------------------------------------------
 """
 Content Addressed Storage (CAS) Resolution Module
@@ -6448,7 +5994,7 @@ class CASResolver:
         return source.path if source else ""
 
 --------------------------------------------------------------------------------
-FILE: src\walker\chunks.py
+FILE: walker\chunks.py
 --------------------------------------------------------------------------------
 """
 Chunks Module
@@ -6766,7 +6312,7 @@ class ChunkOperators:
         return 1.0 / (1.0 + 0.4 * dist)
 
 --------------------------------------------------------------------------------
-FILE: src\walker\db.py
+FILE: walker\db.py
 --------------------------------------------------------------------------------
 """
 Database Layer
@@ -7502,7 +7048,7 @@ class CartridgeDB:
         return None
 
 --------------------------------------------------------------------------------
-FILE: src\walker\graph.py
+FILE: walker\graph.py
 --------------------------------------------------------------------------------
 """
 Graph Module
@@ -7828,7 +7374,7 @@ class GraphOperators:
         return [e for e in edges if self.is_high_signal_edge(e.edge_type)]
 
 --------------------------------------------------------------------------------
-FILE: src\walker\llm_agent.py
+FILE: walker\llm_agent.py
 --------------------------------------------------------------------------------
 """
 LLM Agent with 3-Tier Memory and Citation Extraction.
@@ -8164,7 +7710,7 @@ Always include citations to make your responses verifiable and traceable."""
         return matches  # List of (type, id) tuples
 
 --------------------------------------------------------------------------------
-FILE: src\walker\manifest.py
+FILE: walker\manifest.py
 --------------------------------------------------------------------------------
 """
 Manifest Module
@@ -8640,7 +8186,7 @@ class ManifestReader:
         }
 
 --------------------------------------------------------------------------------
-FILE: src\walker\model_validator.py
+FILE: walker\model_validator.py
 --------------------------------------------------------------------------------
 """
 Model Validator — Startup health check for model slots.
@@ -8783,7 +8329,7 @@ def validate_models(settings: AppSettings) -> ValidationResult:
     return result
 
 --------------------------------------------------------------------------------
-FILE: src\walker\mutation_prompt.py
+FILE: walker\mutation_prompt.py
 --------------------------------------------------------------------------------
 """
 Mutation Prompt Builder.
@@ -8896,7 +8442,7 @@ Intent: {intent}
     return prompt
 
 --------------------------------------------------------------------------------
-FILE: src\walker\notes.py
+FILE: walker\notes.py
 --------------------------------------------------------------------------------
 """
 Notes Module
@@ -9373,7 +8919,7 @@ class NotesDB:
                     """, (json.dumps(profile.failure_modes), cartridge_id))
 
 --------------------------------------------------------------------------------
-FILE: src\walker\patcher.py
+FILE: walker\patcher.py
 --------------------------------------------------------------------------------
 """
 Stateless Exact-Match Patcher.
@@ -9583,7 +9129,7 @@ def apply_patch(proposal: PatchProposal) -> PatchResult:
         )
 
 --------------------------------------------------------------------------------
-FILE: src\walker\policy.py
+FILE: walker\policy.py
 --------------------------------------------------------------------------------
 """
 Policy Module
@@ -9900,7 +9446,7 @@ class PolicySelector:
         return policy
 
 --------------------------------------------------------------------------------
-FILE: src\walker\scoring.py
+FILE: walker\scoring.py
 --------------------------------------------------------------------------------
 """
 Scoring Module
@@ -10332,7 +9878,7 @@ class Scorer:
         }
 
 --------------------------------------------------------------------------------
-FILE: src\walker\session_db.py
+FILE: walker\session_db.py
 --------------------------------------------------------------------------------
 """
 Session Database for storing queries, activations, and summaries.
@@ -10700,7 +10246,7 @@ class SessionDB:
         }
 
 --------------------------------------------------------------------------------
-FILE: src\walker\signature.py
+FILE: walker\signature.py
 --------------------------------------------------------------------------------
 """
 Signature Module
@@ -10857,7 +10403,7 @@ class SignatureComputer:
         }
 
 --------------------------------------------------------------------------------
-FILE: src\walker\structure.py
+FILE: walker\structure.py
 --------------------------------------------------------------------------------
 """
 Structure Module
@@ -11141,7 +10687,7 @@ class StructureOperators:
         return 1.0 / (1.0 + 0.3 * dist)
 
 --------------------------------------------------------------------------------
-FILE: src\walker\types.py
+FILE: walker\types.py
 --------------------------------------------------------------------------------
 """
 Node Walker Type Definitions
@@ -11824,7 +11370,7 @@ class PatchVerificationResult:
     error: str = ""
 
 --------------------------------------------------------------------------------
-FILE: src\walker\walker.py
+FILE: walker\walker.py
 --------------------------------------------------------------------------------
 """
 Walker Module
@@ -12684,7 +12230,7 @@ class NodeWalker:
         }
 
 --------------------------------------------------------------------------------
-FILE: src\walker\__init__.py
+FILE: walker\__init__.py
 --------------------------------------------------------------------------------
 """
 Node Walker Core Module
@@ -12853,7 +12399,7 @@ __all__ = [
 ]
 
 --------------------------------------------------------------------------------
-FILE: src\walker\forensics\pipeline.py
+FILE: walker\forensics\pipeline.py
 --------------------------------------------------------------------------------
 """
 Forensic Query Pipeline -- Orchestrator.
@@ -13192,7 +12738,7 @@ def _record_result(session_db, result: ManifoldResult) -> None:
         pass  # Non-critical
 
 --------------------------------------------------------------------------------
-FILE: src\walker\forensics\referents.py
+FILE: walker\forensics\referents.py
 --------------------------------------------------------------------------------
 """
 Referent Resolver.
@@ -13296,7 +12842,7 @@ def resolve_active_referent(query_text: str, ui_state: dict) -> ReferentBinding:
     )
 
 --------------------------------------------------------------------------------
-FILE: src\walker\forensics\router.py
+FILE: walker\forensics\router.py
 --------------------------------------------------------------------------------
 """
 Forensic Query Router.
@@ -13435,7 +12981,7 @@ def classify_intent(query_text: str) -> IntentLabel:
     return IntentLabel.EXPLAIN
 
 --------------------------------------------------------------------------------
-FILE: src\walker\forensics\types.py
+FILE: walker\forensics\types.py
 --------------------------------------------------------------------------------
 """
 Forensic Query Pipeline -- Type Contracts.
@@ -13556,7 +13102,7 @@ class ManifoldResult:
     facet_results: List[FacetResult] = field(default_factory=list)
 
 --------------------------------------------------------------------------------
-FILE: src\walker\forensics\__init__.py
+FILE: walker\forensics\__init__.py
 --------------------------------------------------------------------------------
 """
 Forensic Query Pipeline.
@@ -13585,7 +13131,7 @@ __all__ = [
 ]
 
 --------------------------------------------------------------------------------
-FILE: src\walker\gravity\decomposer.py
+FILE: walker\gravity\decomposer.py
 --------------------------------------------------------------------------------
 """
 Facet Decomposer.
@@ -13865,7 +13411,7 @@ class FacetDecomposer:
         )
 
 --------------------------------------------------------------------------------
-FILE: src\walker\gravity\engine.py
+FILE: walker\gravity\engine.py
 --------------------------------------------------------------------------------
 """
 Evidence Gravity Engine.
@@ -14175,7 +13721,7 @@ class EvidenceGravityEngine:
                 self._sources.pop(eid, None)
 
 --------------------------------------------------------------------------------
-FILE: src\walker\gravity\packer.py
+FILE: walker\gravity\packer.py
 --------------------------------------------------------------------------------
 """
 Evidence Packer.
@@ -14496,7 +14042,7 @@ class EvidencePacker:
         return "\n".join(parts)
 
 --------------------------------------------------------------------------------
-FILE: src\walker\gravity\pipeline.py
+FILE: walker\gravity\pipeline.py
 --------------------------------------------------------------------------------
 """
 Forensic Evidence Gravity Pipeline.
@@ -15758,7 +15304,7 @@ class ForensicPipeline:
             return True, f"ambiguous verdict: {verdict}"
 
 --------------------------------------------------------------------------------
-FILE: src\walker\gravity\sufficiency.py
+FILE: walker\gravity\sufficiency.py
 --------------------------------------------------------------------------------
 """
 Sufficiency Critic.
@@ -16013,7 +15559,7 @@ class SufficiencyCritic:
         return avg < self.config.relevance_decay_threshold
 
 --------------------------------------------------------------------------------
-FILE: src\walker\gravity\types.py
+FILE: walker\gravity\types.py
 --------------------------------------------------------------------------------
 """
 Evidence Gravity Type Contracts.
@@ -16244,7 +15790,7 @@ class GravityConfig:
     enable_integrity_critic: bool = True
 
 --------------------------------------------------------------------------------
-FILE: src\walker\gravity\__init__.py
+FILE: walker\gravity\__init__.py
 --------------------------------------------------------------------------------
 """
 Evidence Gravity System.
@@ -16306,7 +15852,3 @@ __all__ = [
     "ForensicPipeline",
     "ForensicResult",
 ]
-
---------------------------------------------------------------------------------
-FILE: _database_BIN\_ProjectMAPPER_v1.db-wal
---------------------------------------------------------------------------------

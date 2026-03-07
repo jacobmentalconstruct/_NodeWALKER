@@ -1,8 +1,11 @@
 """
 Referent Resolver.
 
-Determines what 'this/it/that' refers to based on UI state.
-Priority: selected_text > selected_node > pinned_context > cartridge > unbound.
+Determines what 'this/it/that/the app/the project/the document' refers to
+based on UI state and world profile.
+
+Priority: selected_text > selected_node > pinned_context
+          > project/document vocabulary > cartridge > unbound.
 """
 
 import re
@@ -24,10 +27,28 @@ _PINNED_RE = re.compile(
     re.IGNORECASE,
 )
 
+# Project/application vocabulary — binds to the whole loaded world
+_PROJECT_RE = re.compile(
+    r'\b(the app|the application|the project|the codebase|the repo|'
+    r'the repository|whole app|whole project|entire project|'
+    r'entire codebase|overall architecture|the system|'
+    r'application architecture|project structure|codebase structure)\b',
+    re.IGNORECASE,
+)
+
+# Document/page vocabulary — binds to document-type worlds
+_DOCUMENT_RE = re.compile(
+    r'\b(the document|the page|this page|that paragraph|'
+    r'the chapter|the section|this section|the text|the article|'
+    r'the corpus|the collection|document structure)\b',
+    re.IGNORECASE,
+)
+
 
 def resolve_active_referent(query_text: str, ui_state: dict) -> ReferentBinding:
     """
-    Resolve what 'this/it/that' refers to based on current UI state.
+    Resolve what 'this/it/that/the app/the document' refers to based on
+    current UI state and world profile.
 
     Args:
         query_text: The user's query string.
@@ -40,6 +61,7 @@ def resolve_active_referent(query_text: str, ui_state: dict) -> ReferentBinding:
             - selected_file_path: str or None
             - pinned_items: list of dicts with label, chunk_id, text
             - has_cartridge: bool
+            - world_profile: WorldProfile or None
 
     Returns:
         ReferentBinding describing the resolved referent.
@@ -54,6 +76,7 @@ def resolve_active_referent(query_text: str, ui_state: dict) -> ReferentBinding:
     selected_node_name = ui_state.get("selected_node_name")
     pinned_items = ui_state.get("pinned_items") or []
     has_cartridge = ui_state.get("has_cartridge", False)
+    world_profile = ui_state.get("world_profile")
 
     # Priority 1: Selected text in preview pane (most specific)
     if has_deictic and selected_text and selected_text.strip():
@@ -86,14 +109,42 @@ def resolve_active_referent(query_text: str, ui_state: dict) -> ReferentBinding:
             display_label=f"Pinned: {first.get('label', 'context')}",
         )
 
-    # Priority 4: Cartridge-wide (default when cartridge is loaded)
-    if has_cartridge:
-        return ReferentBinding(
-            referent_type=ReferentType.CARTRIDGE,
-            display_label="Cartridge (whole codebase)",
+    # Priority 4: Project/document vocabulary — world-aware resolution
+    if has_cartridge and world_profile:
+        world_label = getattr(world_profile, "world_label", "")
+        world_kind_val = getattr(
+            getattr(world_profile, "world_kind", None), "value", ""
         )
 
-    # Priority 5: No cartridge loaded
+        # Project/application terms → whole loaded world
+        if _PROJECT_RE.search(query_text):
+            return ReferentBinding(
+                referent_type=ReferentType.CARTRIDGE,
+                display_label=f"Project: {world_label} ({world_kind_val})",
+            )
+
+        # Document/page terms → bind to doc-type worlds
+        if _DOCUMENT_RE.search(query_text) and world_kind_val in (
+            "document_corpus", "pdf_collection", "single_document",
+        ):
+            return ReferentBinding(
+                referent_type=ReferentType.CARTRIDGE,
+                display_label=f"Document: {world_label} ({world_kind_val})",
+            )
+
+    # Priority 5: Cartridge-wide (default when cartridge is loaded)
+    if has_cartridge:
+        label = "Cartridge (whole codebase)"
+        if world_profile:
+            world_label = getattr(world_profile, "world_label", "")
+            if world_label:
+                label = f"Cartridge: {world_label}"
+        return ReferentBinding(
+            referent_type=ReferentType.CARTRIDGE,
+            display_label=label,
+        )
+
+    # Priority 6: No cartridge loaded
     return ReferentBinding(
         referent_type=ReferentType.UNBOUND,
         display_label="No cartridge loaded",

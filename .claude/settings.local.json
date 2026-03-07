@@ -7,7 +7,14 @@
       "Bash(python -m py_compile \"C:/Users/jacob/Documents/_UsefulDataCurationTools/_NodeWALKER/src/walker/gravity/pipeline.py\")",
       "Bash(python -m py_compile \"C:/Users/jacob/Documents/_UsefulDataCurationTools/_NodeWALKER/src/walker/forensics/pipeline.py\")",
       "Bash(python -m py_compile \"C:/Users/jacob/Documents/_UsefulDataCurationTools/_NodeWALKER/src/walker/gravity/packer.py\")",
-      "Bash(python -m py_compile \"C:/Users/jacob/Documents/_UsefulDataCurationTools/_NodeWALKER/src/walker/gravity/types.py\")"
+      "Bash(python -m py_compile \"C:/Users/jacob/Documents/_UsefulDataCurationTools/_NodeWALKER/src/walker/gravity/types.py\")",
+      "Bash(python -c \"import py_compile; py_compile.compile\\(''src/walker/world_profile.py'', doraise=True\\); print\\(''world_profile.py: OK''\\)\")",
+      "Bash(python -c \"import py_compile; py_compile.compile\\(''src/walker/forensics/referents.py'', doraise=True\\); print\\(''referents.py: OK''\\)\")",
+      "Bash(python -c \"import py_compile; py_compile.compile\\(''src/walker/forensics/pipeline.py'', doraise=True\\); print\\(''forensics/pipeline.py: OK''\\)\")",
+      "Bash(python -c \"import py_compile; py_compile.compile\\(''src/walker/gravity/pipeline.py'', doraise=True\\); print\\(''gravity/pipeline.py: OK''\\)\")",
+      "Bash(python -c \"import py_compile; py_compile.compile\\(''src/walker/gravity/decomposer.py'', doraise=True\\); print\\(''decomposer.py: OK''\\)\")",
+      "Bash(python -c \"import py_compile; py_compile.compile\\(''src/walker/gravity/packer.py'', doraise=True\\); print\\(''packer.py: OK''\\)\")",
+      "Bash(python -c \"import py_compile; py_compile.compile\\(''src/ui/circuit_window.py'', doraise=True\\); print\\(''circuit_window.py: OK''\\)\")"
     ]
   }
 }

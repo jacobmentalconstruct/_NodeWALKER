@@ -195,7 +195,7 @@ class GravityConfig:
     """Configuration for the forensic evidence gravity pipeline."""
 
     # --- Mass computation ---
-    heavy_mass_threshold: float = 2.0    # Mass above this = "heavy" evidence
+    heavy_mass_threshold: float = 0.25   # Mass above this = "heavy" evidence
     gradient_alignment_bonus: float = 0.5  # Bonus per aligned gradient (2+ = heavy)
 
     # --- Gravity pull weights (how each gradient contributes to pull) ---
@@ -211,7 +211,7 @@ class GravityConfig:
 
     # --- KV budget ---
     kv_token_budget: int = 8000
-    facet_summary_max_tokens: int = 200
+    facet_summary_max_tokens: int = 500
     verbatim_expansion_max_tokens: int = 500
     max_verbatim_expansions: int = 5
 

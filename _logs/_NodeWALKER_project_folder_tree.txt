@@ -1,6 +1,11 @@
 Project Tree: C:\Users\jacob\Documents\_UsefulDataCurationTools\_NodeWALKER
-Generated: 2026-03-06 07:40:05.787377
+Generated: 2026-03-06 12:33:54.513798
 
+├── 📁 .claude/
+│   └── 📄 settings.local.json
+├── 📁 _database_BIN/
+│   ├── 📄 _ProjectMAPPER_v1.db-shm
+│   ├── 📄 _ProjectMAPPER_v1.db-wal
 ├── 📁 assets/
 │   └── 📁 icons/
 ├── 📁 src/

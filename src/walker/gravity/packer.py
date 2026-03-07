@@ -195,11 +195,26 @@ class EvidencePacker:
         token_budget: int,
     ) -> str:
         """Use LLM helper to compress evidence into a summary."""
-        system = (
-            f"Summarize the evidence below to answer this question in "
-            f"under {token_budget} tokens. Include citation IDs in [[chunk:ID]] format. "
-            f"Be concise and factual."
-        )
+        world_hint = getattr(self, 'world_hint', '')
+        domain_note = f" Domain: {world_hint}." if world_hint else ""
+
+        # Use prompt library if available
+        pl = getattr(self, 'prompt_library', None)
+        if pl:
+            template = pl.active_text("compression_instructions")
+            try:
+                system = template.format(
+                    token_budget=token_budget, domain_note=domain_note,
+                )
+            except (KeyError, ValueError):
+                system = template  # placeholders missing, use raw
+        else:
+            system = (
+                f"Summarize the evidence below to answer this question in "
+                f"under {token_budget} tokens. Include citation IDs in [[chunk:ID]] format. "
+                f"Preserve key details and specifics from the evidence. "
+                f"Be accurate and grounded in the source material.{domain_note}"
+            )
         prompt = f"Question: {question}\n\nEvidence:\n{evidence}"
 
         try:
@@ -281,6 +296,19 @@ class EvidencePacker:
         This is what gets sent to the big_brain LLM for final answer.
         """
         parts = []
+
+        # Synthesis instructions from prompt library or default
+        pl = getattr(self, 'prompt_library', None)
+        synth_text = pl.active_text("synthesis_instructions") if pl else ""
+        if not synth_text:
+            synth_text = (
+                "Answer the query below using ONLY the collected evidence. "
+                "Provide a thorough, well-articulated explanation. "
+                "Reference specific details from the evidence and include "
+                "citation IDs ([[chunk:ID]]) to support your claims. "
+                "Do not be terse -- explain your reasoning clearly."
+            )
+        parts.append(f"## Synthesis Instructions\n{synth_text}\n")
         parts.append(f"## Query\n{query}\n")
 
         # Facet summaries

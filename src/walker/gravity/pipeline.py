@@ -218,6 +218,14 @@ class ForensicPipeline:
         self._critic = SufficiencyCritic(self._gravity, self.config)
         self._packer = EvidencePacker(self._gravity, self.config, self.llm_agent)
 
+        # Propagate world hint and prompt library to helper-model consumers
+        wh = getattr(self, 'world_hint', '')
+        pl = getattr(self, 'prompt_library', None)
+        self._decomposer.world_hint = wh
+        self._packer.world_hint = wh
+        self._decomposer.prompt_library = pl
+        self._packer.prompt_library = pl
+
         # ---- Stage 1: Intent Router (decompose into facets) ----
         facets = self._decomposer.decompose(query)
 
@@ -286,6 +294,14 @@ class ForensicPipeline:
         self._decomposer = FacetDecomposer(self.llm_agent, self.config)
         self._critic = SufficiencyCritic(self._gravity, self.config)
         self._packer = EvidencePacker(self._gravity, self.config, self.llm_agent)
+
+        # Propagate world hint and prompt library to helper-model consumers
+        wh = getattr(self, 'world_hint', '')
+        pl = getattr(self, 'prompt_library', None)
+        self._decomposer.world_hint = wh
+        self._packer.world_hint = wh
+        self._decomposer.prompt_library = pl
+        self._packer.prompt_library = pl
 
         # Stage 1: Decompose with binding context
         facets = self._decomposer.decompose(query, referent=referent, scope=scope)
@@ -411,7 +427,7 @@ class ForensicPipeline:
                                     structural_signal=0.5,
                                     semantic_signal=0.0,
                                     graph_signal=0.0,
-                                    verbatim_signal=0.0,
+                                    verbatim_signal=0.5,
                                 )
                             walker.emit_activation(
                                 ActivationKind.COLLECT,
@@ -441,7 +457,7 @@ class ForensicPipeline:
                                 structural_signal=0.5,
                                 semantic_signal=0.0,
                                 graph_signal=0.0,
-                                verbatim_signal=0.0,
+                                verbatim_signal=0.8,
                             )
                         walker.emit_activation(
                             ActivationKind.COLLECT,
@@ -719,7 +735,7 @@ class ForensicPipeline:
                             structural_signal=1.0,
                             semantic_signal=0.0,
                             graph_signal=0.0,
-                            verbatim_signal=0.0,
+                            verbatim_signal=1.0,
                         )
                     walker.emit_activation(
                         ActivationKind.COLLECT, TargetType.TREE_NODE, node_id,
@@ -908,6 +924,7 @@ class ForensicPipeline:
             pass
 
         # Register in gravity engine
+        # verbatim_signal reflects that we have actual CAS content
         gravity.register_evidence(
             evidence_id=chunk_id,
             target_type="chunk",
@@ -915,7 +932,7 @@ class ForensicPipeline:
             structural_signal=structural_signal,
             semantic_signal=semantic_signal,
             graph_signal=graph_signal,
-            verbatim_signal=0.0,
+            verbatim_signal=0.5,
         )
 
         # Emit collect activation
@@ -1227,12 +1244,21 @@ class ForensicPipeline:
             f"- {f.question}" for f in facets
         )
 
-        system = (
-            "You are an integrity critic. Evaluate this answer.\n"
-            "Check: (1) Does it address the query? (2) Are citations present? "
-            "(3) Is there scope drift?\n"
-            "Reply with ONLY: OK or FAIL: <reason>"
-        )
+        world_hint = getattr(self, 'world_hint', '')
+        world_note = f"\nWorld context: {world_hint}" if world_hint else ""
+
+        # Read integrity critic prompt from library if available
+        pl = getattr(self, 'prompt_library', None)
+        if pl:
+            template = pl.active_text("integrity_critic")
+        else:
+            template = (
+                "You are an integrity critic. Evaluate this answer.\n"
+                "Check: (1) Does it address the query? (2) Are citations present? "
+                "(3) Is there scope drift?{world_note}\n"
+                "Reply with ONLY: OK or FAIL: <reason>"
+            )
+        system = template.format(world_note=world_note)
 
         prompt = (
             f"Query: {query}\n\n"

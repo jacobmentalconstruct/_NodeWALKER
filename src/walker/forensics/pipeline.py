@@ -30,6 +30,7 @@ from src.walker.gravity.types import GravityConfig
 from src.walker.mutation_prompt import build_patch_prompt
 from src.walker.patcher import verify_exact_match
 from src.walker.types import PatchProposal
+from src.walker.world_profile import make_world_hint
 from src.ui.event_bus import get_event_bus, PATCH_PROPOSED
 
 
@@ -139,6 +140,13 @@ def run_forensic_query(
         session_db=session_db,
     )
 
+    # Attach world hint for downstream helper calls (decomposer, packer, critic)
+    world_profile = ui_state.get("world_profile")
+    gravity_pipeline.world_hint = make_world_hint(world_profile)
+
+    # Attach prompt library for customizable prompts
+    gravity_pipeline.prompt_library = ui_state.get("prompt_library")
+
     gravity_result = gravity_pipeline.run_with_binding(
         query=query_text,
         referent=referent,
@@ -155,6 +163,12 @@ def run_forensic_query(
     if not gravity_result.integrity_ok:
         drift_warnings.append(
             f"Integrity concern: {gravity_result.integrity_notes}"
+        )
+    if not ui_state.get("content_loaded", True):
+        drift_warnings.append(
+            "Content retrieval failure: The focused node's content could "
+            "not be loaded from the datastore. Inform the user instead of "
+            "guessing what the content might be."
         )
 
     facet_results = [
